@@ -1,0 +1,30 @@
+{
+  "name": "78code-quota-monitor",
+  "version": "1.0.0",
+  "description": "Claude Code 状态栏插件 - 实时显示 78code.cc 账号额度",
+  "main": "lib/core.js",
+  "bin": {
+    "78code-quota": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md"
+  ],
+  "keywords": [
+    "claude-code",
+    "78code",
+    "quota",
+    "statusline",
+    "monitor"
+  ],
+  "author": "zxyyang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zxyyang/78code-quota-monitor.git"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

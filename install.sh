@@ -4,11 +4,8 @@
 
 set -e
 
-REPO="https://raw.githubusercontent.com/zxyyang/78code-quota-monitor/main"
-DIR="$HOME/.claude/hooks/quota-monitor"
-
 echo ""
-echo "  78code Quota Monitor 安装程序"
+echo "  💰 78code Quota Monitor 安装程序"
 echo "  ================================"
 echo ""
 
@@ -18,36 +15,28 @@ if ! command -v node &> /dev/null; then
   exit 1
 fi
 
-# 检查 Claude Code hooks 目录
-if [ ! -d "$HOME/.claude/hooks" ]; then
-  echo "  ✗ 未找到 Claude Code hooks 目录 (~/.claude/hooks)"
-  echo "    请确认已安装 Claude Code"
+# 检查 npm
+if ! command -v npm &> /dev/null; then
+  echo "  ✗ 未找到 npm"
   exit 1
 fi
 
-# 创建目录
-mkdir -p "$DIR"
+# 全局安装 npm 包
+echo "  → 安装 npm 包..."
+npm install -g 78code-quota-monitor
 
-# 下载核心文件
-echo "  → 下载核心文件..."
-curl -fsSL "$REPO/cli.js" -o "$DIR/cli.js"
-curl -fsSL "$REPO/check.js" -o "$DIR/check.js"
-
-# 注入到状态栏
+# 运行安装
 echo "  → 安装到状态栏..."
-node "$DIR/cli.js" install
+78code-quota install
 
 echo ""
 echo "  ✓ 安装完成!"
 echo ""
-echo "  下一步 - 登录你的 78code 账号:"
+echo "  下一步 - 运行交互式设置:"
 echo ""
-echo "    node ~/.claude/hooks/quota-monitor/cli.js login <用户名> <密码>"
+echo "    78code-quota"
 echo ""
-echo "  登录后重启 Claude Code 即可在状态栏看到额度信息。"
+echo "  或直接登录:"
 echo ""
-echo "  更多命令:"
-echo "    node ~/.claude/hooks/quota-monitor/cli.js status    # 查看状态"
-echo "    node ~/.claude/hooks/quota-monitor/cli.js refresh   # 刷新额度"
-echo "    node ~/.claude/hooks/quota-monitor/cli.js logout    # 退出登录"
+echo "    78code-quota login <用户名> <密码>"
 echo ""
