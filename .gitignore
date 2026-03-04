@@ -1,0 +1,6 @@
+config.json
+cache.json
+debug.log
+.lock
+node_modules/
+.DS_Store
