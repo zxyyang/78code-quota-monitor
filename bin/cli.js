@@ -24,7 +24,7 @@ const c = {
 function banner() {
   console.log('');
   console.log(c.purple('  ╔══════════════════════════════════════╗'));
-  console.log(c.purple('  ║    💰 78code Quota Monitor v1.0.0    ║'));
+  console.log(c.purple('  ║    💰 78code Quota Monitor v2.0.0    ║'));
   console.log(c.purple('  ║    Claude Code 状态栏额度监控插件     ║'));
   console.log(c.purple('  ╚══════════════════════════════════════╝'));
   console.log('');
@@ -93,13 +93,16 @@ async function mainMenu() {
 async function doInstall() {
   core.ensureDir();
 
-  // 复制 check.js 到 monitor 目录
+  // 复制 check.js, core.js, statusline-wrapper.js 到 monitor 目录
   const srcCheck = path.join(__dirname, '..', 'lib', 'check.js');
   const srcCore = path.join(__dirname, '..', 'lib', 'core.js');
+  const srcWrapper = path.join(__dirname, '..', 'lib', 'statusline-wrapper.js');
   const dstCheck = path.join(core.MONITOR_DIR, 'check.js');
   const dstCore = path.join(core.MONITOR_DIR, 'core.js');
+  const dstWrapper = path.join(core.MONITOR_DIR, 'statusline-wrapper.js');
   fs.copyFileSync(srcCheck, dstCheck);
   fs.copyFileSync(srcCore, dstCore);
+  fs.copyFileSync(srcWrapper, dstWrapper);
 
   const result = core.installStatusline();
   console.log(result.ok ? c.green(`  ✓ ${result.msg}`) : c.red(`  ✗ ${result.msg}`));
@@ -177,12 +180,6 @@ async function doInterval() {
   if (config) {
     config.checkInterval = selected.value;
     core.writeConfig(config);
-  }
-
-  // 重新注入 statusline 以更新间隔
-  if (core.isInstalled()) {
-    core.uninstallStatusline();
-    core.installStatusline();
   }
 
   console.log(c.green(`  ✓ 刷新间隔已设为: ${selected.label}`));
@@ -295,7 +292,7 @@ async function doUninstall() {
 
   // 清理文件
   const lockFile = path.join(core.MONITOR_DIR, '.lock');
-  for (const f of [core.CONFIG_FILE, core.CACHE_FILE, lockFile]) {
+  for (const f of [core.CONFIG_FILE, core.CACHE_FILE, lockFile, core.WRAPPER_FILE]) {
     if (fs.existsSync(f)) fs.unlinkSync(f);
   }
   console.log(c.green('  ✓ 本地数据已清除'));
