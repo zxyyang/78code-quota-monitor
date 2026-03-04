@@ -45,11 +45,11 @@ const QUOTA_BLOCK = `    ${START_MARKER}
         const divisor = 500000;
         if (q.status === 'ok' && q.quota != null) {
           const remaining = (q.quota / divisor).toFixed(2);
-          quotaInfo = \` │ \\x1b[36m\${q.displayName || q.username}(\${q.userId})\\x1b[0m \\x1b[33m余额:$\${remaining}\\x1b[0m\`;
+          quotaInfo = \` │ \\x1b[38;5;177m💰 \${q.displayName || q.username}(\${q.userId}) · 余额$\${remaining}\\x1b[0m\`;
         } else if (q.status === 'auth_error') {
-          quotaInfo = \` │ \\x1b[31mCookie过期 重登中...\\x1b[0m\`;
+          quotaInfo = \` │ \\x1b[38;5;177m💰 Cookie过期 重登中...\\x1b[0m\`;
         } else if (q.status === 'error') {
-          quotaInfo = \` │ \\x1b[31m额度查询异常\\x1b[0m\`;
+          quotaInfo = \` │ \\x1b[38;5;177m💰 额度查询异常\\x1b[0m\`;
         }
 
         // 缓存超过5分钟则触发后台刷新
@@ -70,7 +70,7 @@ const QUOTA_BLOCK = `    ${START_MARKER}
         stdio: 'ignore',
       });
       child.unref();
-      quotaInfo = \` │ \\x1b[2m额度加载中...\\x1b[0m\`;
+      quotaInfo = \` │ \\x1b[38;5;177m💰 加载中...\\x1b[0m\`;
     }
 
     // Output

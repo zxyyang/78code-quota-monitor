@@ -3,7 +3,7 @@
 Claude Code 状态栏插件 —— 实时显示你的 [78code.cc](https://www.78code.cc) 账号额度。
 
 ```
-Opus 4.6 (1M context) │ myproject │ ██░░░░░░░░ 12% │ myuser(42) 余额:$150.16
+Opus 4.6 (1M context) │ myproject │ ██░░░░░░░░ 12% │ 💰 myuser(42) · 余额$150.16
                                                       ↑ 插件显示区域
 ```
 
