@@ -3,6 +3,7 @@
 // 安装后运行: 78code-quota
 
 const readline = require('readline');
+const pkg = require('../package.json');
 const path = require('path');
 const fs = require('fs');
 const core = require('../lib/core');
@@ -24,7 +25,7 @@ const c = {
 function banner() {
   console.log('');
   console.log(c.purple('  ╔══════════════════════════════════════╗'));
-  console.log(c.purple('  ║    💰 78code Quota Monitor v2.0.0    ║'));
+  console.log(c.purple(`  ║    💰 78code Quota Monitor v${pkg.version}    ║`));
   console.log(c.purple('  ║    Claude Code 状态栏额度监控插件     ║'));
   console.log(c.purple('  ╚══════════════════════════════════════╝'));
   console.log('');
