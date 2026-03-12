@@ -22,6 +22,33 @@ const c = {
   cyan: s => `\x1b[36m${s}\x1b[0m`,
 };
 
+// 获取完整数据（余额 + 订阅 + 分组 + 倍率）并构建缓存
+async function fetchFullCache(session, userId, username) {
+  const res = await core.apiGetUser(session, userId);
+  const d = res.data?.data || res.data;
+  let subscriptions = [], currentToken = null, groupRatio = null;
+  try {
+    const [subRes, tokenRes, groupRes] = await Promise.all([
+      core.apiGetSubscription(session, userId),
+      core.apiGetTokens(session, userId),
+      core.apiGetGroups(session, userId),
+    ]);
+    if (subRes.data?.success !== false && subRes.data?.data) {
+      subscriptions = subRes.data.data.subscriptions || [];
+    }
+    if (tokenRes.data?.success !== false && tokenRes.data?.data) {
+      currentToken = core.detectCurrentGroup(tokenRes.data.data.items || []);
+    }
+    if (groupRes.data?.success !== false && groupRes.data?.data && currentToken) {
+      const g = groupRes.data.data[currentToken.group];
+      if (g) groupRatio = g.ratio;
+    }
+  } catch (e) {}
+  const cache = core.buildCacheObj(d, username, userId, subscriptions, currentToken, groupRatio);
+  core.writeCache(cache);
+  return cache;
+}
+
 function banner() {
   console.log('');
   console.log(c.purple('  ╔══════════════════════════════════════╗'));
@@ -164,14 +191,14 @@ async function doLogin() {
     core.writeConfig(config);
     console.log(c.green(`  ✓ 登录成功! 用户ID: ${userId}`));
 
-    // 立即查询额度
+    // 立即查询完整数据
     console.log(c.dim('  正在查询额度...'));
-    const res = await core.apiGetUser(session, userId);
-    const d = res.data?.data || res.data;
-    const cache = core.buildCacheObj(d, username.trim(), userId);
-    core.writeCache(cache);
-
-    console.log(c.green(`  ✓ 剩余额度: $${core.formatQuota(cache.quota)}`));
+    const cache = await fetchFullCache(session, userId, username.trim());
+    console.log(c.green(`  ✓ 钱包余额: $${core.formatQuota(cache.quota)}`));
+    if (cache.currentToken) {
+      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
+      console.log(c.green(`  ✓ 当前分组: ${cache.currentToken.group}${ratio}`));
+    }
     console.log(c.dim('  重启 Claude Code 后状态栏将显示额度'));
   } catch (e) {
     console.log(c.red(`  ✗ 错误: ${e.message}`));
@@ -286,9 +313,9 @@ async function doRefresh() {
 
   console.log(c.dim('  正在刷新...'));
   try {
-    let res = await core.apiGetUser(config.session, config.userId);
-
-    if (res.data.success === false) {
+    // 先检查 session 是否有效
+    let testRes = await core.apiGetUser(config.session, config.userId);
+    if (testRes.data.success === false) {
       console.log(c.yellow('  Session 已过期，正在重新登录...'));
       const login = await core.apiLogin(config.username, config.password);
       if (!login.session) {
@@ -300,13 +327,14 @@ async function doRefresh() {
       config.lastLogin = Date.now();
       core.writeConfig(config);
       console.log(c.green('  ✓ 重新登录成功'));
-      res = await core.apiGetUser(config.session, config.userId);
     }
 
-    const d = res.data?.data || res.data;
-    const cache = core.buildCacheObj(d, config.username, config.userId);
-    core.writeCache(cache);
-    console.log(c.green(`  ✓ 剩余: $${core.formatQuota(cache.quota)}  已用: $${core.formatQuota(cache.usedQuota)}`));
+    const cache = await fetchFullCache(config.session, config.userId, config.username);
+    console.log(c.green(`  ✓ 钱包余额: $${core.formatQuota(cache.quota)}`));
+    if (cache.currentToken) {
+      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
+      console.log(c.green(`  ✓ 当前分组: ${cache.currentToken.group}${ratio}`));
+    }
   } catch (e) {
     console.log(c.red(`  ✗ 错误: ${e.message}`));
   }
@@ -379,10 +407,7 @@ if (directCmd) {
               checkInterval: (oldConfig && oldConfig.checkInterval) || 300,
               lastLogin: Date.now(),
             });
-            const res = await core.apiGetUser(session, userId);
-            const d = res.data?.data || res.data;
-            const cache = core.buildCacheObj(d, args[0], userId);
-            core.writeCache(cache);
+            const cache = await fetchFullCache(session, userId, args[0]);
             console.log(c.green(`  ✓ 登录成功! ${args[0]}(${userId}) 余额: $${core.formatQuota(cache.quota)}`));
           } catch (e) {
             console.log(c.red(`  ✗ ${e.message}`));
