@@ -135,7 +135,7 @@ async function doLogin() {
       password: password.trim(),
       session,
       userId,
-      baseUrl: 'https://www.78code.cc',
+      baseUrl: 'https://api.78code.cc',
       checkInterval: (oldConfig && oldConfig.checkInterval) || 300,
       lastLogin: Date.now(),
     };
@@ -321,7 +321,7 @@ if (directCmd) {
             const oldConfig = core.readConfig();
             core.writeConfig({
               username: args[0], password: args[1], session, userId,
-              baseUrl: 'https://www.78code.cc',
+              baseUrl: 'https://api.78code.cc',
               checkInterval: (oldConfig && oldConfig.checkInterval) || 300,
               lastLogin: Date.now(),
             });

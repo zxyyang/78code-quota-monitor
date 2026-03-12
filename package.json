@@ -1,6 +1,6 @@
 {
   "name": "78code-quota-monitor",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Claude Code 状态栏插件 - 实时显示 78code.cc 账号额度",
   "main": "lib/core.js",
   "bin": {
