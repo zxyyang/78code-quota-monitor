@@ -1,15 +1,18 @@
 # 78code Quota Monitor
 
-Claude Code 状态栏插件 —— 实时显示你的 [78code.cc](https://www.78code.cc) 账号额度。
+Claude Code 状态栏插件 —— 实时显示你的 [78code.cc](https://www.78code.cc) 账号额度、订阅套餐、分组倍率。
 
 ```
-Opus 4.6 (1M context) │ myproject │ ██░░░░░░░░ 12% │ 💰 myuser(42) · 余额$150.16
-                                                      ↑ 插件显示区域
+Opus 4.6 │ myproject │ 💰 zxyang | new-cc 1.5x | $321.51 | vip-1-codex ¥0/50 31d
+                       ↑ 用户名    ↑ 分组+倍率    ↑ 钱包余额  ↑ 订阅套餐 额度 剩余天数
 ```
 
 ## 功能
 
-- **状态栏实时显示** — 用户名、ID、剩余额度，一目了然
+- **状态栏实时显示** — 用户名、分组倍率、钱包余额、订阅套餐，一目了然
+- **多色区分** — 用户名(浅蓝)、分组(浅紫)、余额(金黄)、订阅(浅绿)，清晰易读
+- **分组识别** — 自动匹配当前 API Key 对应的分组，并显示倍率
+- **订阅套餐** — 展示有效套餐名称、已用/总额度、剩余天数，过期自动隐藏
 - **全局生效** — 安装一次，所有目录/项目均可显示，无需重复安装
 - **可调刷新间隔** — 支持 1 / 2 / 5 / 10 / 30 分钟
 - **Cookie 自动续期** — Session 过期后自动用保存的凭据重新登录
@@ -42,7 +45,7 @@ npm install -g 78code-quota-monitor
 
 ```
   ╔══════════════════════════════════════╗
-  ║    💰 78code Quota Monitor v2.0.0    ║
+  ║    💰 78code Quota Monitor v2.1.1   ║
   ║    Claude Code 状态栏额度监控插件     ║
   ╚══════════════════════════════════════╝
 
@@ -86,6 +89,22 @@ npm install -g 78code-quota-monitor
 78code-quota uninstall                  # 卸载
 ```
 
+## 状态栏展示说明
+
+```
+💰 用户名 | 分组 倍率x | $钱包余额 | 套餐名 ¥已用/总额 剩余天数d
+```
+
+| 信息 | 颜色 | 说明 |
+|------|------|------|
+| 用户名 | 浅蓝 | 78code 显示名 |
+| 分组+倍率 | 浅紫 | 当前 API Key 的分组及计费倍率 |
+| 钱包余额 | 金黄 | 账户钱包余额（美元） |
+| 订阅套餐 | 浅绿 | 套餐名、已用/总额度（人民币）、剩余天数 |
+
+- 无有效订阅时，订阅部分不显示
+- 多个有效订阅会依次追加展示
+
 ## 刷新间隔
 
 支持以下间隔，通过交互菜单或 `78code-quota interval` 设置：
@@ -122,15 +141,23 @@ npm uninstall -g 78code-quota-monitor
 │ (每次渲染调用)    │读取  │ (本地缓存) │ 写入 │ (后台API查询) │
 └──────┬───────────┘     └───────────┘     └──────┬───────┘
        │                                          │
-       │ 先执行 gsd-statusline.js                  │ Cookie过期?
-       │ 再追加额度信息                             │ 自动重新登录
+       │ 先执行 gsd-statusline.js                  │ 并行请求:
+       │ 再追加额度信息                             │ · /api/user/self (余额)
+       │                                          │ · /api/subscription/self (订阅)
+       │                                          │ · /api/token/ (分组匹配)
+       │                                          │ · /api/user/self/groups (倍率)
        │                                          ↓
        │                                  ┌──────────────┐
        │                                  │ 78code.cc API│
        │                                  └──────────────┘
        ↓
-  Claude Code 状态栏: model │ dir │ ctx │ 💰 user(id) · 余额$xxx
+  Claude Code 状态栏: model │ dir │ 💰 user | group 1.5x | $xxx | plan ¥x/x xxd
 ```
+
+**v2.1 新增：**
+- 订阅套餐展示（名称、额度、剩余天数），过期自动隐藏
+- 自动识别当前 API Key 对应的分组及倍率
+- 多色区分不同信息，紧凑布局减少占用空间
 
 **v2.0 架构改进（独立包装模式）：**
 - 不再修改 `gsd-statusline.js`，通过独立的 wrapper 脚本包装
@@ -148,14 +175,14 @@ npm uninstall -g 78code-quota-monitor
 | `cache.json` | 缓存的额度数据 | 仅本地，已在 .gitignore |
 | `debug.log` | 调试日志 | 仅本地，已在 .gitignore |
 
-## 从 v1.x 升级
-
-v2.0 会自动清除旧版注入到 `gsd-statusline.js` 的代码，无需手动操作。只需重新运行：
+## 从旧版本升级
 
 ```bash
 npm install -g 78code-quota-monitor
 78code-quota install
 ```
+
+v2.1 会自动同步所有运行时脚本，v2.0 会自动清除旧版注入代码，无需手动操作。
 
 ## License
 
