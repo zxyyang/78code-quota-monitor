@@ -342,10 +342,26 @@ if (directCmd) {
       case 'logout': await doLogout(); break;
       case 'status': await doStatus(); break;
       case 'refresh': await doRefresh(); break;
+      case 'update': {
+        console.log(c.dim('  正在更新到最新版本...'));
+        const { execSync } = require('child_process');
+        try {
+          execSync('npm install -g 78code-quota-monitor@latest', { stdio: 'inherit' });
+          // 重新 require 新版 core 以同步脚本
+          const freshCore = require('../lib/core');
+          const res = freshCore.installStatusline();
+          console.log(c.green(`  ✓ 脚本已同步: ${res.msg}`));
+          console.log(c.green(`  ✓ 更新完成，当前版本 v${require('../package.json').version}`));
+          console.log(c.dim('  请重启 Claude ​Code 生效'));
+        } catch (e) {
+          console.log(c.red(`  ✗ 更新失败: ${e.message}`));
+        }
+        break;
+      }
       case 'interval': await doInterval(); break;
       default:
         console.log(`  未知命令: ${directCmd}`);
-        console.log('  可用: install | uninstall | login | logout | status | refresh | interval');
+        console.log('  可用: install | uninstall | login | logout | status | refresh | interval | update');
     }
   };
   run().catch(e => console.error(c.red(e.message))).finally(() => rl.close());
