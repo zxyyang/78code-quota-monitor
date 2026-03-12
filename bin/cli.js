@@ -331,9 +331,18 @@ async function doRefresh() {
 
     const cache = await fetchFullCache(config.session, config.userId, config.username);
     console.log(c.green(`  ✓ 钱包余额: $${core.formatQuota(cache.quota)}`));
-    if (cache.currentToken) {
-      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
-      console.log(c.green(`  ✓ 当前分组: ${cache.currentToken.group}${ratio}`));
+    const now = Math.floor(Date.now() / 1000);
+    const activeSubs = (cache.subscriptions || []).filter(s => {
+      const sub = s.subscription || s;
+      return sub.status === 'active' && sub.end_time > now;
+    });
+    for (const s of activeSubs) {
+      const sub = s.subscription || s;
+      const used = (sub.amount_used / 500000).toFixed(2);
+      const total = (sub.amount_total / 500000).toFixed(2);
+      const days = Math.ceil((sub.end_time - now) / 86400);
+      const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+      console.log(c.green(`  ✓ 订阅套餐: ${name} $${used}/$${total} 剩余${days}天`));
     }
   } catch (e) {
     console.log(c.red(`  ✗ 错误: ${e.message}`));
