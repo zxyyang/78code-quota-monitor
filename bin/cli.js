@@ -43,7 +43,28 @@ function statusSummary() {
     const iv = core.INTERVALS.find(i => i.value === config.checkInterval);
     console.log(`  刷新间隔:  ${c.cyan(iv ? iv.label : config.checkInterval + '秒')}`);
     if (cache && cache.status === 'ok') {
-      console.log(`  剩余额度:  ${c.yellow('$' + core.formatQuota(cache.quota))}`);
+      console.log(`  钱包余额:  ${c.yellow('$' + core.formatQuota(cache.quota))}`);
+      // 分组 + 倍率
+      if (cache.currentToken) {
+        const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
+        console.log(`  当前分组:  ${c.purple(cache.currentToken.group + ratio)}`);
+      }
+      // 订阅套餐
+      const now = Math.floor(Date.now() / 1000);
+      const activeSubs = (cache.subscriptions || []).filter(s => {
+        const sub = s.subscription || s;
+        return sub.status === 'active' && sub.end_time > now;
+      });
+      if (activeSubs.length > 0) {
+        for (const s of activeSubs) {
+          const sub = s.subscription || s;
+          const used = (sub.amount_used / 500000).toFixed(2);
+          const total = (sub.amount_total / 500000).toFixed(2);
+          const days = Math.ceil((sub.end_time - now) / 86400);
+          const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+          console.log(`  订阅套餐:  ${c.green(`${name} $${used}/$${total} 剩余${days}天`)}`);
+        }
+      }
       const ageSec = Math.round((Date.now() - cache.updatedAt) / 1000);
       const ageStr = ageSec < 60 ? `${ageSec}秒前` : `${Math.round(ageSec / 60)}分钟前`;
       console.log(`  更新时间:  ${c.dim(ageStr)}`);
@@ -213,9 +234,41 @@ async function doStatus() {
   if (cache) {
     console.log('');
     console.log(c.purple('  ─── 额度 ───'));
-    console.log(`  剩余额度:    ${c.yellow('$' + core.formatQuota(cache.quota))}`);
+    console.log(`  钱包余额:    ${c.yellow('$' + core.formatQuota(cache.quota))}`);
     console.log(`  已用额度:    $${core.formatQuota(cache.usedQuota)}`);
-    if (cache.group) console.log(`  用户组:      ${cache.group}`);
+
+    // 分组 + 倍率
+    if (cache.currentToken) {
+      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x 倍率)` : '';
+      console.log(`  当前分组:    ${c.purple(cache.currentToken.group + ratio)}`);
+    } else if (cache.group) {
+      console.log(`  用户组:      ${cache.group}`);
+    }
+
+    // 订阅套餐
+    const now = Math.floor(Date.now() / 1000);
+    const activeSubs = (cache.subscriptions || []).filter(s => {
+      const sub = s.subscription || s;
+      return sub.status === 'active' && sub.end_time > now;
+    });
+    if (activeSubs.length > 0) {
+      console.log('');
+      console.log(c.purple('  ─── 订阅 ───'));
+      for (const s of activeSubs) {
+        const sub = s.subscription || s;
+        const used = (sub.amount_used / 500000).toFixed(2);
+        const total = (sub.amount_total / 500000).toFixed(2);
+        const days = Math.ceil((sub.end_time - now) / 86400);
+        const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+        const endDate = new Date(sub.end_time * 1000);
+        const dateStr = `${endDate.getFullYear()}/${endDate.getMonth() + 1}/${endDate.getDate()}`;
+        console.log(`  套餐名称:    ${c.green(name)}`);
+        console.log(`  套餐额度:    $${used} / $${total}`);
+        console.log(`  到期时间:    ${dateStr} (剩余${days}天)`);
+      }
+    }
+
+    console.log('');
     console.log(`  状态:        ${cache.status === 'ok' ? c.green('OK') : c.red(cache.error || cache.status)}`);
     const ageSec = Math.round((Date.now() - cache.updatedAt) / 1000);
     const ageStr = ageSec < 60 ? `${ageSec}秒前` : `${Math.round(ageSec / 60)}分钟前`;
