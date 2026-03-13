@@ -1,0 +1,53 @@
+# 功能保护清单
+# PR 不允许删除以下任何功能，只允许新增功能和修复 bug
+# 此文件被 CI 自动检查，请勿随意修改
+
+## CLI 命令 (bin/cli.js)
+commands:
+  - install
+  - uninstall
+  - login
+  - logout
+  - status
+  - refresh
+  - update
+  - interval
+
+## 菜单选项 (bin/cli.js)
+menu:
+  - doInstall
+  - doLogin
+  - doInterval
+  - doStatus
+  - doRefresh
+  - doLogout
+  - doUninstall
+
+## 核心导出函数 (lib/core.js)
+exports:
+  - ensureDir
+  - readConfig
+  - writeConfig
+  - readCache
+  - writeCache
+  - log
+  - httpFetch
+  - apiLogin
+  - apiGetUser
+  - apiGetTokens
+  - apiGetGroups
+  - apiGetSubscription
+  - formatQuota
+  - buildCacheObj
+  - formatSubscriptions
+  - detectCurrentGroup
+  - installStatusline
+  - uninstallStatusline
+  - isInstalled
+
+## 核心文件 (不允许删除)
+files:
+  - bin/cli.js
+  - lib/core.js
+  - lib/check.js
+  - lib/statusline-wrapper.js

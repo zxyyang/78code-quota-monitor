@@ -29,6 +29,84 @@ jobs:
           done
           echo "✅ 语法检查通过"
 
+  feature-guard:
+    name: Feature Guard (禁止删除功能)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check core files not deleted
+        run: |
+          echo "🛡️ 检查核心文件..."
+          MISSING=""
+          for f in bin/cli.js lib/core.js lib/check.js lib/statusline-wrapper.js; do
+            if [ ! -f "$f" ]; then
+              MISSING="$MISSING\n  ✗ $f 被删除了!"
+            else
+              echo "  ✓ $f"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo -e "❌ 核心文件被删除:$MISSING"
+            exit 1
+          fi
+
+      - name: Check CLI commands not removed
+        run: |
+          echo "🛡️ 检查 CLI 命令..."
+          MISSING=""
+          for cmd in install uninstall login logout status refresh update interval; do
+            if ! grep -q "case '$cmd'" bin/cli.js; then
+              MISSING="$MISSING\n  ✗ 命令 '$cmd' 被删除了!"
+            else
+              echo "  ✓ $cmd"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo -e "❌ CLI 命令被删除:$MISSING"
+            exit 1
+          fi
+
+      - name: Check menu functions not removed
+        run: |
+          echo "🛡️ 检查菜单函数..."
+          MISSING=""
+          for fn in doInstall doLogin doInterval doStatus doRefresh doLogout doUninstall; do
+            if ! grep -q "async function $fn\|function $fn" bin/cli.js; then
+              MISSING="$MISSING\n  ✗ 函数 $fn() 被删除了!"
+            else
+              echo "  ✓ $fn()"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo -e "❌ 菜单函数被删除:$MISSING"
+            exit 1
+          fi
+
+      - name: Check core exports not removed
+        run: |
+          echo "🛡️ 检查核心导出..."
+          MISSING=""
+          for exp in ensureDir readConfig writeConfig readCache writeCache log httpFetch \
+                     apiLogin apiGetUser apiGetTokens apiGetGroups apiGetSubscription \
+                     formatQuota buildCacheObj formatSubscriptions detectCurrentGroup \
+                     installStatusline uninstallStatusline isInstalled; do
+            if ! grep -q "$exp" lib/core.js; then
+              MISSING="$MISSING\n  ✗ 导出 $exp 被删除了!"
+            else
+              echo "  ✓ $exp"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo -e "❌ 核心导出被删除:$MISSING"
+            exit 1
+          fi
+
+      - name: Summary
+        run: echo "✅ 功能保护检查通过 — 没有功能被删除"
+
   copilot-review:
     name: Copilot Code Review
     runs-on: ubuntu-latest
@@ -36,10 +114,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: github/copilot-code-review@v1
+        with:
+          custom-instructions: |
+            审查规则:
+            1. 允许：新增功能、优化代码、修复 bug
+            2. 禁止：删除现有功能、删除 CLI 命令、移除导出函数
+            3. 如果 PR 删除了任何现有功能或命令，必须标记为 "request_changes" 并明确指出
+            4. 检查代码安全性，不允许引入明显的安全漏洞
+            5. 检查是否有硬编码的密钥、token 等敏感信息
 
   auto-merge:
     name: Auto Merge
-    needs: [syntax-check, copilot-review]
+    needs: [syntax-check, feature-guard, copilot-review]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +133,7 @@ jobs:
       - name: Auto approve
         uses: hmarr/auto-approve-action@v4
         with:
-          review-message: "✅ 语法检查 + Copilot 审查通过，自动合并"
+          review-message: "✅ 语法检查 + 功能保护 + Copilot AI 审查全部通过，自动合并"
 
       - name: Auto merge
         uses: peter-evans/enable-automerge@v3
