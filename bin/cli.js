@@ -255,6 +255,7 @@ async function doStatus() {
 
   console.log(c.purple('  ═══ 78code 详细状态 ═══'));
   console.log('');
+  console.log(`  当前版本:    ${c.dim('v' + require('../package.json').version)}`);
   console.log(`  插件状态:    ${installed ? c.green('已安装') : c.red('未安装')}`);
   console.log(`  数据目录:    ${c.dim(core.MONITOR_DIR)}`);
 
