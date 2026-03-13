@@ -195,9 +195,18 @@ async function doLogin() {
     console.log(c.dim('  正在查询额度...'));
     const cache = await fetchFullCache(session, userId, username.trim());
     console.log(c.green(`  ✓ 钱包余额: $${core.formatQuota(cache.quota)}`));
-    if (cache.currentToken) {
-      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
-      console.log(c.green(`  ✓ 当前分组: ${cache.currentToken.group}${ratio}`));
+    const now = Math.floor(Date.now() / 1000);
+    const activeSubs = (cache.subscriptions || []).filter(s => {
+      const sub = s.subscription || s;
+      return sub.status === 'active' && sub.end_time > now;
+    });
+    for (const s of activeSubs) {
+      const sub = s.subscription || s;
+      const used = (sub.amount_used / 500000).toFixed(2);
+      const total = (sub.amount_total / 500000).toFixed(2);
+      const days = Math.ceil((sub.end_time - now) / 86400);
+      const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+      console.log(c.green(`  ✓ 订阅套餐: ${name} $${used}/$${total} 剩余${days}天`));
     }
     console.log(c.dim('  重启 Claude Code 后状态栏将显示额度'));
   } catch (e) {
@@ -208,7 +217,11 @@ async function doLogin() {
 // ── 3. 设置刷新间隔 ──
 async function doInterval() {
   const config = core.readConfig();
-  const current = config ? config.checkInterval : 300;
+  if (!config) {
+    console.log(c.yellow('  未登录，请先登录'));
+    return;
+  }
+  const current = config.checkInterval || 300;
 
   console.log(c.bold('  选择刷新间隔:'));
   console.log('');
@@ -218,7 +231,7 @@ async function doInterval() {
   });
   console.log('');
 
-  const choice = await ask(c.purple('  请选择 [1-5]: '));
+  const choice = await ask(c.purple(`  请选择 [1-${core.INTERVALS.length}]: `));
   const idx = parseInt(choice) - 1;
   if (idx < 0 || idx >= core.INTERVALS.length) {
     console.log(c.red('  已取消'));
@@ -331,9 +344,18 @@ async function doRefresh() {
 
     const cache = await fetchFullCache(config.session, config.userId, config.username);
     console.log(c.green(`  ✓ 钱包余额: $${core.formatQuota(cache.quota)}`));
-    if (cache.currentToken) {
-      const ratio = cache.groupRatio != null ? ` (${cache.groupRatio}x)` : '';
-      console.log(c.green(`  ✓ 当前分组: ${cache.currentToken.group}${ratio}`));
+    const now = Math.floor(Date.now() / 1000);
+    const activeSubs = (cache.subscriptions || []).filter(s => {
+      const sub = s.subscription || s;
+      return sub.status === 'active' && sub.end_time > now;
+    });
+    for (const s of activeSubs) {
+      const sub = s.subscription || s;
+      const used = (sub.amount_used / 500000).toFixed(2);
+      const total = (sub.amount_total / 500000).toFixed(2);
+      const days = Math.ceil((sub.end_time - now) / 86400);
+      const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+      console.log(c.green(`  ✓ 订阅套餐: ${name} $${used}/$${total} 剩余${days}天`));
     }
   } catch (e) {
     console.log(c.red(`  ✗ 错误: ${e.message}`));
@@ -409,6 +431,19 @@ if (directCmd) {
             });
             const cache = await fetchFullCache(session, userId, args[0]);
             console.log(c.green(`  ✓ 登录成功! ${args[0]}(${userId}) 余额: $${core.formatQuota(cache.quota)}`));
+            const now = Math.floor(Date.now() / 1000);
+            const activeSubs = (cache.subscriptions || []).filter(s => {
+              const sub = s.subscription || s;
+              return sub.status === 'active' && sub.end_time > now;
+            });
+            for (const s of activeSubs) {
+              const sub = s.subscription || s;
+              const used = (sub.amount_used / 500000).toFixed(2);
+              const total = (sub.amount_total / 500000).toFixed(2);
+              const days = Math.ceil((sub.end_time - now) / 86400);
+              const name = sub.upgrade_group || `套餐#${sub.plan_id}`;
+              console.log(c.green(`  ✓ 订阅套餐: ${name} $${used}/$${total} 剩余${days}天`));
+            }
           } catch (e) {
             console.log(c.red(`  ✗ ${e.message}`));
             process.exit(1);
