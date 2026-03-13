@@ -10,8 +10,47 @@ permissions:
   copilot: write
 
 jobs:
+  # ── 第 0 步：PR 提交后立即回复，告知用户正在审查 ──
+  welcome:
+    name: Welcome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botWelcome = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('自动审查已启动')
+            );
+            if (!botWelcome) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: [
+                  `👋 感谢 @${context.payload.pull_request.user.login} 提交 PR！`,
+                  '',
+                  '🤖 **自动审查已启动**，正在进行以下检查：',
+                  '',
+                  '| 检查项 | 状态 |',
+                  '|--------|------|',
+                  '| 语法检查 (node -c) | ⏳ 进行中... |',
+                  '| 功能保护 (禁止删除功能) | ⏳ 进行中... |',
+                  '| Copilot AI 代码审查 | ⏳ 进行中... |',
+                  '',
+                  '全部通过后将自动合并。如有问题会在下方说明原因。',
+                ].join('\n'),
+              });
+            }
+
+  # ── 第 1 步：语法检查 ──
   syntax-check:
     name: Syntax Check
+    needs: [welcome]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,94 +60,142 @@ jobs:
           node-version: 20
 
       - name: Syntax check
+        id: syntax
         run: |
           echo "🔍 检查 JS 语法..."
+          ERRORS=""
           for f in $(find bin lib -name '*.js'); do
-            node -c "$f" || exit 1
-            echo "  ✓ $f"
+            if node -c "$f" 2>/dev/null; then
+              echo "  ✓ $f"
+            else
+              ERRORS="$ERRORS- \`$f\` 语法错误\n"
+            fi
           done
+          if [ -n "$ERRORS" ]; then
+            echo "has_error=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "errors<<EOF"
+              echo -e "$ERRORS"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "has_error=false" >> "$GITHUB_OUTPUT"
           echo "✅ 语法检查通过"
 
+      - name: Report syntax failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '❌ **语法检查未通过**',
+                '',
+                '以下文件存在语法错误，请修复后重新提交：',
+                '',
+                '${{ steps.syntax.outputs.errors }}',
+                '',
+                '> 修复后推送代码会自动重新检查。',
+              ].join('\n'),
+            });
+
+  # ── 第 2 步：功能保护检查 ──
   feature-guard:
-    name: Feature Guard (禁止删除功能)
+    name: Feature Guard
+    needs: [welcome]
     runs-on: ubuntu-latest
+    outputs:
+      report: ${{ steps.guard.outputs.report }}
+      passed: ${{ steps.guard.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check core files not deleted
+      - name: Run feature guard
+        id: guard
         run: |
+          REPORT=""
+          FAILED=false
+
           echo "🛡️ 检查核心文件..."
-          MISSING=""
           for f in bin/cli.js lib/core.js lib/check.js lib/statusline-wrapper.js; do
             if [ ! -f "$f" ]; then
-              MISSING="$MISSING\n  ✗ $f 被删除了!"
-            else
-              echo "  ✓ $f"
+              REPORT="$REPORT- ❌ 核心文件 \`$f\` 被删除\n"
+              FAILED=true
             fi
           done
-          if [ -n "$MISSING" ]; then
-            echo -e "❌ 核心文件被删除:$MISSING"
-            exit 1
-          fi
 
-      - name: Check CLI commands not removed
-        run: |
           echo "🛡️ 检查 CLI 命令..."
-          MISSING=""
           for cmd in install uninstall login logout status refresh update interval; do
             if ! grep -q "case '$cmd'" bin/cli.js; then
-              MISSING="$MISSING\n  ✗ 命令 '$cmd' 被删除了!"
-            else
-              echo "  ✓ $cmd"
+              REPORT="$REPORT- ❌ CLI 命令 \`$cmd\` 被移除\n"
+              FAILED=true
             fi
           done
-          if [ -n "$MISSING" ]; then
-            echo -e "❌ CLI 命令被删除:$MISSING"
-            exit 1
-          fi
 
-      - name: Check menu functions not removed
-        run: |
           echo "🛡️ 检查菜单函数..."
-          MISSING=""
           for fn in doInstall doLogin doInterval doStatus doRefresh doLogout doUninstall; do
             if ! grep -q "async function $fn\|function $fn" bin/cli.js; then
-              MISSING="$MISSING\n  ✗ 函数 $fn() 被删除了!"
-            else
-              echo "  ✓ $fn()"
+              REPORT="$REPORT- ❌ 函数 \`$fn()\` 被删除\n"
+              FAILED=true
             fi
           done
-          if [ -n "$MISSING" ]; then
-            echo -e "❌ 菜单函数被删除:$MISSING"
-            exit 1
-          fi
 
-      - name: Check core exports not removed
-        run: |
           echo "🛡️ 检查核心导出..."
-          MISSING=""
           for exp in ensureDir readConfig writeConfig readCache writeCache log httpFetch \
                      apiLogin apiGetUser apiGetTokens apiGetGroups apiGetSubscription \
                      formatQuota buildCacheObj formatSubscriptions detectCurrentGroup \
                      installStatusline uninstallStatusline isInstalled; do
             if ! grep -q "$exp" lib/core.js; then
-              MISSING="$MISSING\n  ✗ 导出 $exp 被删除了!"
-            else
-              echo "  ✓ $exp"
+              REPORT="$REPORT- ❌ 导出函数 \`$exp\` 被移除\n"
+              FAILED=true
             fi
           done
-          if [ -n "$MISSING" ]; then
-            echo -e "❌ 核心导出被删除:$MISSING"
+
+          if [ "$FAILED" = true ]; then
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "report<<EOF"
+              echo -e "$REPORT"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
             exit 1
+          else
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "✅ 功能保护检查通过"
           fi
 
-      - name: Summary
-        run: echo "✅ 功能保护检查通过 — 没有功能被删除"
+      - name: Report feature guard failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '❌ **功能保护检查未通过**',
+                '',
+                '本项目**只接受新增功能和 bug 修复**，不允许删除现有功能。',
+                '',
+                '检测到以下问题：',
+                '',
+                `${{ steps.guard.outputs.report }}`,
+                '',
+                '> 请恢复被删除的功能后重新提交。如果确实需要重构，请先开 Issue 讨论。',
+              ].join('\n'),
+            });
 
+  # ── 第 3 步：Copilot AI 代码审查 ──
   copilot-review:
     name: Copilot Code Review
+    needs: [welcome]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -123,12 +210,36 @@ jobs:
             4. 检查代码安全性，不允许引入明显的安全漏洞
             5. 检查是否有硬编码的密钥、token 等敏感信息
 
+  # ── 第 4 步：全部通过 → 回复结果 + 自动合并 ──
   auto-merge:
     name: Auto Merge
     needs: [syntax-check, feature-guard, copilot-review]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Post success report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '✅ **所有检查已通过！**',
+                '',
+                '| 检查项 | 结果 |',
+                '|--------|------|',
+                '| 语法检查 | ✅ 通过 |',
+                '| 功能保护 | ✅ 通过 |',
+                '| Copilot AI 审查 | ✅ 通过 |',
+                '',
+                '正在自动合并，合并后将自动发布新版本到 npm。',
+                '',
+                `感谢 @${context.payload.pull_request.user.login} 的贡献！🎉`,
+              ].join('\n'),
+            });
 
       - name: Auto approve
         uses: hmarr/auto-approve-action@v4
@@ -139,3 +250,30 @@ jobs:
         uses: peter-evans/enable-automerge@v3
         with:
           merge-method: merge
+
+  # ── 失败汇总：如果任何检查失败，给出最终状态 ──
+  failure-report:
+    name: Failure Report
+    needs: [syntax-check, feature-guard, copilot-review]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '⚠️ **自动审查未全部通过**',
+                '',
+                '| 检查项 | 结果 |',
+                '|--------|------|',
+                `| 语法检查 | ${{ needs.syntax-check.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
+                `| 功能保护 | ${{ needs.feature-guard.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
+                `| Copilot AI 审查 | ${{ needs.copilot-review.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
+                '',
+                '请根据上方具体的失败原因修复后重新推送代码，会自动重新检查。',
+              ].join('\n'),
+            });
