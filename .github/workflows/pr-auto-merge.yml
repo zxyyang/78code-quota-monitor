@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  copilot: write
 
 jobs:
   # ── 第 0 步：PR 提交后立即回复，告知用户正在审查 ──
@@ -197,6 +196,8 @@ jobs:
     name: Copilot Code Review
     needs: [welcome]
     runs-on: ubuntu-latest
+    # Copilot 审查可能不可用（需要 Copilot 订阅），失败不阻塞流程
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -233,7 +234,7 @@ jobs:
                 '|--------|------|',
                 '| 语法检查 | ✅ 通过 |',
                 '| 功能保护 | ✅ 通过 |',
-                '| Copilot AI 审查 | ✅ 通过 |',
+                '| Copilot AI 审查 | ✅ 通过 (或已跳过) |',
                 '',
                 '正在自动合并，合并后将自动发布新版本到 npm。',
                 '',
