@@ -39,7 +39,6 @@ jobs:
                   '|--------|------|',
                   '| 语法检查 (node -c) | ⏳ 进行中... |',
                   '| 功能保护 (禁止删除功能) | ⏳ 进行中... |',
-                  '| Copilot AI 代码审查 | ⏳ 进行中... |',
                   '',
                   '全部通过后将自动合并。如有问题会在下方说明原因。',
                 ].join('\n'),
@@ -191,30 +190,10 @@ jobs:
               ].join('\n'),
             });
 
-  # ── 第 3 步：Copilot AI 代码审查 ──
-  copilot-review:
-    name: Copilot Code Review
-    needs: [welcome]
-    runs-on: ubuntu-latest
-    # Copilot 审查可能不可用（需要 Copilot 订阅），失败不阻塞流程
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: github/copilot-code-review@v1
-        with:
-          custom-instructions: |
-            审查规则:
-            1. 允许：新增功能、优化代码、修复 bug
-            2. 禁止：删除现有功能、删除 CLI 命令、移除导出函数
-            3. 如果 PR 删除了任何现有功能或命令，必须标记为 "request_changes" 并明确指出
-            4. 检查代码安全性，不允许引入明显的安全漏洞
-            5. 检查是否有硬编码的密钥、token 等敏感信息
-
-  # ── 第 4 步：全部通过 → 回复结果 + 自动合并 ──
+  # ── 第 3 步：全部通过 → 回复结果 + 自动合并 ──
   auto-merge:
     name: Auto Merge
-    needs: [syntax-check, feature-guard, copilot-review]
+    needs: [syntax-check, feature-guard]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -234,7 +213,6 @@ jobs:
                 '|--------|------|',
                 '| 语法检查 | ✅ 通过 |',
                 '| 功能保护 | ✅ 通过 |',
-                '| Copilot AI 审查 | ✅ 通过 (或已跳过) |',
                 '',
                 '正在自动合并，合并后将自动发布新版本到 npm。',
                 '',
@@ -245,17 +223,17 @@ jobs:
       - name: Auto approve
         uses: hmarr/auto-approve-action@v4
         with:
-          review-message: "✅ 语法检查 + 功能保护 + Copilot AI 审查全部通过，自动合并"
+          review-message: "✅ 语法检查 + 功能保护检查全部通过，自动合并"
 
       - name: Auto merge
-        uses: peter-evans/enable-automerge@v3
-        with:
-          merge-method: merge
+        run: gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 失败汇总：如果任何检查失败，给出最终状态 ──
+  # ── 失败汇总 ──
   failure-report:
     name: Failure Report
-    needs: [syntax-check, feature-guard, copilot-review]
+    needs: [syntax-check, feature-guard]
     if: failure()
     runs-on: ubuntu-latest
     steps:
@@ -273,7 +251,6 @@ jobs:
                 '|--------|------|',
                 `| 语法检查 | ${{ needs.syntax-check.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
                 `| 功能保护 | ${{ needs.feature-guard.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
-                `| Copilot AI 审查 | ${{ needs.copilot-review.result == 'success' && '✅ 通过' || '❌ 失败' }} |`,
                 '',
                 '请根据上方具体的失败原因修复后重新推送代码，会自动重新检查。',
               ].join('\n'),
