@@ -1,0 +1,86 @@
+name: Auto Version Bump & Publish
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-and-publish:
+    runs-on: ubuntu-latest
+    # 跳过 bot 自己的提交，避免无限循环
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && github.event.head_commit.author.name != 'github-actions[bot]'"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version bump type
+        id: bump
+        run: |
+          COMMITS=$(git log $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --pretty=format:"%s")
+          if echo "$COMMITS" | grep -qiE "^feat|^feature"; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump version
+        id: version
+        run: |
+          NEW_VERSION=$(npm version ${{ steps.bump.outputs.type }} --no-git-tag-version)
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 Version bump: ${{ steps.bump.outputs.type }} → $NEW_VERSION"
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            LOGS=$(git log --pretty=format:"- %s (%h)" -20)
+          else
+            LOGS=$(git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD)
+          fi
+          {
+            echo "notes<<EOF"
+            echo "$LOGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump & create tag
+        run: |
+          git add package.json
+          git commit -m "chore: release ${{ steps.version.outputs.new_version }} [skip ci]"
+          git tag ${{ steps.version.outputs.new_version }}
+          git push origin main --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_version }}
+          name: ${{ steps.version.outputs.new_version }}
+          body: |
+            ## Changes
+
+            ${{ steps.changelog.outputs.notes }}
+
+            ---
+            📦 `npm install -g 78code-quota-monitor`

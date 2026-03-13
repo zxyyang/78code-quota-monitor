@@ -1,0 +1,38 @@
+name: PR Auto Review & Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check
+        run: |
+          echo "🔍 检查 JS 语法..."
+          for f in $(find bin lib -name '*.js'); do
+            node -c "$f" || exit 1
+            echo "  ✓ $f"
+          done
+          echo "✅ 语法检查通过"
+
+      - name: Auto approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          review-message: "✅ 自动检查通过，已批准合并"
+
+      - name: Auto merge
+        uses: peter-evans/enable-automerge@v3
+        with:
+          merge-method: merge
