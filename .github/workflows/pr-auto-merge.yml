@@ -7,9 +7,11 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  copilot: write
 
 jobs:
-  check-and-merge:
+  syntax-check:
+    name: Syntax Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +29,25 @@ jobs:
           done
           echo "✅ 语法检查通过"
 
+  copilot-review:
+    name: Copilot Code Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/copilot-code-review@v1
+
+  auto-merge:
+    name: Auto Merge
+    needs: [syntax-check, copilot-review]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Auto approve
         uses: hmarr/auto-approve-action@v4
         with:
-          review-message: "✅ 自动检查通过，已批准合并"
+          review-message: "✅ 语法检查 + Copilot 审查通过，自动合并"
 
       - name: Auto merge
         uses: peter-evans/enable-automerge@v3
