@@ -1,6 +1,6 @@
 #!/bin/bash
 # 9527code Quota Monitor - 一键安装脚本
-# 用法: curl -fsSL https://raw.githubusercontent.com/zxyyang/9527code-quota-monitor/main/install.sh | bash
+# 用法: curl -fsSL https://raw.githubusercontent.com/zxyyang/9527code-quota/main/install.sh | bash
 
 set -e
 
@@ -23,7 +23,7 @@ fi
 
 # 全局安装 npm 包
 echo "  → 安装 npm 包..."
-npm install -g 9527code-quota-monitor
+npm install -g 9527code-quota
 
 # 运行安装
 echo "  → 安装到状态栏..."

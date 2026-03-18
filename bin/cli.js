@@ -401,7 +401,7 @@ async function doUninstall() {
     if (fs.existsSync(f)) fs.unlinkSync(f);
   }
   console.log(c.green('  ✓ 本地数据已清除'));
-  console.log(c.dim('  提示: 可运行 npm uninstall -g 9527code-quota-monitor 移除全局包'));
+  console.log(c.dim('  提示: 可运行 npm uninstall -g 9527code-quota 移除全局包'));
 }
 
 // ── 也支持命令行直接调用 ──
@@ -460,7 +460,7 @@ if (directCmd) {
         console.log(c.dim('  正在更新到最新版本...'));
         const { execSync } = require('child_process');
         try {
-          execSync('npm install -g 9527code-quota-monitor@latest', { stdio: 'inherit' });
+          execSync('npm install -g 9527code-quota@latest', { stdio: 'inherit' });
           // 重新 require 新版 core 以同步脚本
           const freshCore = require('../lib/core');
           const res = freshCore.installStatusline();

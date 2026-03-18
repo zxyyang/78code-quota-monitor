@@ -1,5 +1,5 @@
 {
-  "name": "9527code-quota-monitor",
+  "name": "9527code-quota",
   "version": "1.0.0",
   "description": "Claude Code 状态栏插件 - 实时显示 9527code.com 账号额度",
   "main": "lib/core.js",

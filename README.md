@@ -32,7 +32,7 @@ Opus 4.6 │ myproject │ 💰 zxyang | new-cc 1.5x | $321.51 | vip-1-codex ¥0
 ### 方式一：npm 安装（推荐）
 
 ```bash
-npm install -g 9527code-quota-monitor
+npm install -g 9527code-quota
 ```
 
 安装后运行交互式设置：
@@ -62,14 +62,14 @@ npm install -g 9527code-quota-monitor
 ### 方式二：一键脚本安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zxyyang/9527code-quota-monitor/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/zxyyang/9527code-quota/main/install.sh | bash
 ```
 
 ## 快速开始
 
 ```bash
 # 1. 安装 npm 包
-npm install -g 9527code-quota-monitor
+npm install -g 9527code-quota
 
 # 2. 打开交互式菜单
 9527code-quota
@@ -130,7 +130,7 @@ npm install -g 9527code-quota-monitor
 
 ```bash
 9527code-quota uninstall
-npm uninstall -g 9527code-quota-monitor
+npm uninstall -g 9527code-quota
 ```
 
 ## 工作原理
@@ -178,7 +178,7 @@ npm uninstall -g 9527code-quota-monitor
 ## 从旧版本升级
 
 ```bash
-npm install -g 9527code-quota-monitor
+npm install -g 9527code-quota
 9527code-quota install
 ```
 
