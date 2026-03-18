@@ -1,6 +1,6 @@
-# 78code Quota Monitor
+# 9527code Quota Monitor
 
-Claude Code 状态栏插件 —— 实时显示你的 [78code.cc](https://www.78code.cc) 账号额度、订阅套餐、分组倍率。
+Claude Code 状态栏插件 —— 实时显示你的 [9527code.com](https://www.9527code.com) 账号额度、订阅套餐、分组倍率。
 
 ```
 Opus 4.6 │ myproject │ 💰 zxyang | new-cc 1.5x | $321.51 | vip-1-codex ¥0/50 31d
@@ -32,20 +32,20 @@ Opus 4.6 │ myproject │ 💰 zxyang | new-cc 1.5x | $321.51 | vip-1-codex ¥0
 ### 方式一：npm 安装（推荐）
 
 ```bash
-npm install -g 78code-quota-monitor
+npm install -g 9527code-quota-monitor
 ```
 
 安装后运行交互式设置：
 
 ```bash
-78code-quota
+9527code-quota
 ```
 
 会出现交互式菜单，按提示操作即可：
 
 ```
   ╔══════════════════════════════════════╗
-  ║    💰 78code Quota Monitor v2.1.1   ║
+  ║    💰 9527code Quota Monitor v2.1.1   ║
   ║    Claude Code 状态栏额度监控插件     ║
   ╚══════════════════════════════════════╝
 
@@ -62,17 +62,17 @@ npm install -g 78code-quota-monitor
 ### 方式二：一键脚本安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zxyyang/78code-quota-monitor/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/zxyyang/9527code-quota-monitor/main/install.sh | bash
 ```
 
 ## 快速开始
 
 ```bash
 # 1. 安装 npm 包
-npm install -g 78code-quota-monitor
+npm install -g 9527code-quota-monitor
 
 # 2. 打开交互式菜单
-78code-quota
+9527code-quota
 
 # 3. 选 1 安装到状态栏 → 选 2 登录账号 → 重启 Claude Code
 ```
@@ -80,13 +80,13 @@ npm install -g 78code-quota-monitor
 或者用命令行直接操作（跳过菜单）：
 
 ```bash
-78code-quota install                    # 安装到状态栏
-78code-quota login <用户名> <密码>       # 登录
-78code-quota status                     # 查看状态
-78code-quota refresh                    # 刷新额度
-78code-quota interval                   # 设置刷新间隔
-78code-quota logout                     # 退出登录
-78code-quota uninstall                  # 卸载
+9527code-quota install                    # 安装到状态栏
+9527code-quota login <用户名> <密码>       # 登录
+9527code-quota status                     # 查看状态
+9527code-quota refresh                    # 刷新额度
+9527code-quota interval                   # 设置刷新间隔
+9527code-quota logout                     # 退出登录
+9527code-quota uninstall                  # 卸载
 ```
 
 ## 状态栏展示说明
@@ -97,7 +97,7 @@ npm install -g 78code-quota-monitor
 
 | 信息 | 颜色 | 说明 |
 |------|------|------|
-| 用户名 | 浅蓝 | 78code 显示名 |
+| 用户名 | 浅蓝 | 9527code 显示名 |
 | 分组+倍率 | 浅紫 | 当前 API Key 的分组及计费倍率 |
 | 钱包余额 | 金黄 | 账户钱包余额（美元） |
 | 订阅套餐 | 浅绿 | 套餐名、已用/总额度（人民币）、剩余天数 |
@@ -107,7 +107,7 @@ npm install -g 78code-quota-monitor
 
 ## 刷新间隔
 
-支持以下间隔，通过交互菜单或 `78code-quota interval` 设置：
+支持以下间隔，通过交互菜单或 `9527code-quota interval` 设置：
 
 | 选项 | 间隔 |
 |------|------|
@@ -122,15 +122,15 @@ npm install -g 78code-quota-monitor
 **交互式卸载：**
 
 ```bash
-78code-quota
+9527code-quota
 # 选择 7 → 卸载插件
 ```
 
 **命令行卸载：**
 
 ```bash
-78code-quota uninstall
-npm uninstall -g 78code-quota-monitor
+9527code-quota uninstall
+npm uninstall -g 9527code-quota-monitor
 ```
 
 ## 工作原理
@@ -148,7 +148,7 @@ npm uninstall -g 78code-quota-monitor
        │                                          │ · /api/user/self/groups (倍率)
        │                                          ↓
        │                                  ┌──────────────┐
-       │                                  │ 78code.cc API│
+       │                                  │ 9527code.com API│
        │                                  └──────────────┘
        ↓
   Claude Code 状态栏: model │ dir │ 💰 user | group 1.5x | $xxx | plan ¥x/x xxd
@@ -178,8 +178,8 @@ npm uninstall -g 78code-quota-monitor
 ## 从旧版本升级
 
 ```bash
-npm install -g 78code-quota-monitor
-78code-quota install
+npm install -g 9527code-quota-monitor
+9527code-quota install
 ```
 
 v2.1 会自动同步所有运行时脚本，v2.0 会自动清除旧版注入代码，无需手动操作。

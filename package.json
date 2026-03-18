@@ -1,10 +1,10 @@
 {
-  "name": "78code-quota-monitor",
-  "version": "2.2.6",
-  "description": "Claude Code 状态栏插件 - 实时显示 78code.cc 账号额度",
+  "name": "9527code-quota-monitor",
+  "version": "1.0.0",
+  "description": "Claude Code 状态栏插件 - 实时显示 9527code.com 账号额度",
   "main": "lib/core.js",
   "bin": {
-    "78code-quota": "bin/cli.js"
+    "9527code-quota": "bin/cli.js"
   },
   "scripts": {
     "postinstall": "node -e \"try{require('./lib/core').installStatusline()}catch(e){}\""
@@ -16,7 +16,7 @@
   ],
   "keywords": [
     "claude-code",
-    "78code",
+    "9527code",
     "quota",
     "statusline",
     "monitor"
@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zxyyang/78code-quota-monitor.git"
+    "url": "https://github.com/zxyyang/9527code-quota-monitor.git"
   },
   "engines": {
     "node": ">=16"

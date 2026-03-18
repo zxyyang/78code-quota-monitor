@@ -83,4 +83,4 @@ jobs:
             ${{ steps.changelog.outputs.notes }}
 
             ---
-            📦 `npm install -g 78code-quota-monitor`
+            📦 `npm install -g 9527code-quota-monitor`

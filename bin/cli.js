@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 78code Quota Monitor - 交互式 CLI
-// 安装后运行: 78code-quota
+// 9527code Quota Monitor - 交互式 CLI
+// 安装后运行: 9527code-quota
 
 const readline = require('readline');
 const pkg = require('../package.json');
@@ -52,7 +52,7 @@ async function fetchFullCache(session, userId, username) {
 function banner() {
   console.log('');
   console.log(c.purple('  ╔══════════════════════════════════════╗'));
-  console.log(c.purple(`  ║    💰 78code Quota Monitor v${pkg.version}    ║`));
+  console.log(c.purple(`  ║    💰 9527code Quota Monitor v${pkg.version}    ║`));
   console.log(c.purple('  ║    Claude Code 状态栏额度监控插件     ║'));
   console.log(c.purple('  ╚══════════════════════════════════════╝'));
   console.log('');
@@ -184,7 +184,7 @@ async function doLogin() {
       password: password.trim(),
       session,
       userId,
-      baseUrl: 'https://api.78code.cc',
+      baseUrl: 'https://api.9527code.com',
       checkInterval: (oldConfig && oldConfig.checkInterval) || 300,
       lastLogin: Date.now(),
     };
@@ -253,7 +253,7 @@ async function doStatus() {
   const cache = core.readCache();
   const installed = core.isInstalled();
 
-  console.log(c.purple('  ═══ 78code 详细状态 ═══'));
+  console.log(c.purple('  ═══ 9527code 详细状态 ═══'));
   console.log('');
   console.log(`  当前版本:    ${c.dim('v' + require('../package.json').version)}`);
   console.log(`  插件状态:    ${installed ? c.green('已安装') : c.red('未安装')}`);
@@ -401,7 +401,7 @@ async function doUninstall() {
     if (fs.existsSync(f)) fs.unlinkSync(f);
   }
   console.log(c.green('  ✓ 本地数据已清除'));
-  console.log(c.dim('  提示: 可运行 npm uninstall -g 78code-quota-monitor 移除全局包'));
+  console.log(c.dim('  提示: 可运行 npm uninstall -g 9527code-quota-monitor 移除全局包'));
 }
 
 // ── 也支持命令行直接调用 ──
@@ -426,7 +426,7 @@ if (directCmd) {
             const oldConfig = core.readConfig();
             core.writeConfig({
               username: args[0], password: args[1], session, userId,
-              baseUrl: 'https://api.78code.cc',
+              baseUrl: 'https://api.9527code.com',
               checkInterval: (oldConfig && oldConfig.checkInterval) || 300,
               lastLogin: Date.now(),
             });
@@ -460,7 +460,7 @@ if (directCmd) {
         console.log(c.dim('  正在更新到最新版本...'));
         const { execSync } = require('child_process');
         try {
-          execSync('npm install -g 78code-quota-monitor@latest', { stdio: 'inherit' });
+          execSync('npm install -g 9527code-quota-monitor@latest', { stdio: 'inherit' });
           // 重新 require 新版 core 以同步脚本
           const freshCore = require('../lib/core');
           const res = freshCore.installStatusline();
